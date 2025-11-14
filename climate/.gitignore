@@ -1,0 +1,33 @@
+# Rust
+/target
+Cargo.lock
+**/*.rs.bk
+*.pdb
+
+# Environment variables
+.env
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+
+# BigQuery credentials
+*.json
+!schemas/*.json
+
+# Data files
+data/
+*.csv
+*.parquet
+*.nc
+*.grib
