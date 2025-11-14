@@ -1,0 +1,185 @@
+{
+  "source_id": "example_source",
+  "version": "1.0",
+  "description": "Schema definition for example data source",
+  "fields": [
+    {
+      "name": "id",
+      "type": "STRING",
+      "mode": "REQUIRED",
+      "description": "Unique identifier for the record"
+    },
+    {
+      "name": "created_at",
+      "type": "TIMESTAMP",
+      "mode": "REQUIRED",
+      "description": "Timestamp when the record was created (UTC)"
+    },
+    {
+      "name": "updated_at",
+      "type": "TIMESTAMP",
+      "mode": "NULLABLE",
+      "description": "Timestamp when the record was last updated (UTC)"
+    },
+    {
+      "name": "name",
+      "type": "STRING",
+      "mode": "REQUIRED",
+      "description": "Name or title of the entity",
+      "max_length": 255
+    },
+    {
+      "name": "email",
+      "type": "STRING",
+      "mode": "NULLABLE",
+      "description": "Email address",
+      "pattern": "^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$"
+    },
+    {
+      "name": "status",
+      "type": "STRING",
+      "mode": "REQUIRED",
+      "description": "Current status of the record",
+      "enum": ["active", "inactive", "pending", "deleted"]
+    },
+    {
+      "name": "amount",
+      "type": "FLOAT64",
+      "mode": "NULLABLE",
+      "description": "Monetary amount in USD",
+      "min_value": 0.0
+    },
+    {
+      "name": "count",
+      "type": "INT64",
+      "mode": "NULLABLE",
+      "description": "Integer count or quantity",
+      "min_value": 0
+    },
+    {
+      "name": "is_active",
+      "type": "BOOL",
+      "mode": "NULLABLE",
+      "description": "Boolean flag indicating if the record is active"
+    },
+    {
+      "name": "tags",
+      "type": "STRING",
+      "mode": "REPEATED",
+      "description": "Array of tag strings"
+    },
+    {
+      "name": "metadata",
+      "type": "RECORD",
+      "mode": "NULLABLE",
+      "description": "Nested object containing additional metadata",
+      "fields": [
+        {
+          "name": "source",
+          "type": "STRING",
+          "mode": "NULLABLE",
+          "description": "Source system identifier"
+        },
+        {
+          "name": "version",
+          "type": "STRING",
+          "mode": "NULLABLE",
+          "description": "Schema version"
+        },
+        {
+          "name": "properties",
+          "type": "JSON",
+          "mode": "NULLABLE",
+          "description": "Flexible JSON object for additional properties"
+        }
+      ]
+    },
+    {
+      "name": "address",
+      "type": "RECORD",
+      "mode": "NULLABLE",
+      "description": "Address information",
+      "fields": [
+        {
+          "name": "street",
+          "type": "STRING",
+          "mode": "NULLABLE",
+          "description": "Street address"
+        },
+        {
+          "name": "city",
+          "type": "STRING",
+          "mode": "NULLABLE",
+          "description": "City name"
+        },
+        {
+          "name": "state",
+          "type": "STRING",
+          "mode": "NULLABLE",
+          "description": "State or province code",
+          "max_length": 2
+        },
+        {
+          "name": "postal_code",
+          "type": "STRING",
+          "mode": "NULLABLE",
+          "description": "Postal or ZIP code"
+        },
+        {
+          "name": "country",
+          "type": "STRING",
+          "mode": "NULLABLE",
+          "description": "ISO 3166-1 alpha-2 country code",
+          "pattern": "^[A-Z]{2}$"
+        }
+      ]
+    }
+  ],
+  "partition": {
+    "type": "time",
+    "field": "created_at",
+    "granularity": "day"
+  },
+  "clustering": {
+    "fields": ["status", "created_at"]
+  },
+  "data_quality": {
+    "rules": [
+      {
+        "name": "id_not_null",
+        "field": "id",
+        "check": "not_null",
+        "severity": "error"
+      },
+      {
+        "name": "email_format",
+        "field": "email",
+        "check": "matches_pattern",
+        "pattern": "^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$",
+        "severity": "warning"
+      },
+      {
+        "name": "amount_positive",
+        "field": "amount",
+        "check": "greater_than_or_equal",
+        "value": 0,
+        "severity": "error"
+      },
+      {
+        "name": "status_valid",
+        "field": "status",
+        "check": "in_list",
+        "values": ["active", "inactive", "pending", "deleted"],
+        "severity": "error"
+      }
+    ]
+  },
+  "pii_fields": [
+    "email",
+    "address"
+  ],
+  "tags": {
+    "sensitivity": "internal",
+    "domain": "example"
+  }
+}

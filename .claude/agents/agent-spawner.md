@@ -49,7 +49,7 @@ Do NOT create a new subagent when:
 
 ### Step 1: Assess Existing Agents
 Before creating a new agent, verify no similar agent exists:
-1. Use Glob with pattern `*.md` in `/home/matpimenta/workspaces/np-spawner/.claude/agents/` to list all agents
+1. Use Glob with pattern `*.md` in `.claude/agents/` to list all agents
 2. Use Grep to search for agents with similar keywords or functionality
 3. Use Read to review any potentially overlapping agents
 4. If similar agent exists, recommend using or refining it instead of creating duplicate
@@ -142,7 +142,7 @@ Note: [Tools NOT included and why]
 
 ### Step 5: Create the Agent File
 
-1. Use Write tool to create file at `/home/matpimenta/workspaces/np-spawner/.claude/agents/[agent-name].md`
+1. Use Write tool to create file at `.claude/agents/[agent-name].md`
 2. Use kebab-case for the filename (e.g., `code-analyzer.md`, `test-runner.md`)
 3. Ensure frontmatter is valid YAML with proper quoting
 4. Include all required sections from the template above
@@ -164,7 +164,7 @@ After creating an agent, return a summary (max 1,500 tokens) containing:
 
 **Task**: Create an agent that analyzes test coverage
 
-**Created Agent**: `/home/matpimenta/workspaces/np-spawner/.claude/agents/test-coverage-analyzer.md`
+**Created Agent**: `.claude/agents/test-coverage-analyzer.md`
 
 ```markdown
 ---
@@ -267,7 +267,7 @@ Note: Write and Edit are NOT needed because this agent only analyzes, never modi
 
 **Task**: Create an agent that refactors code based on patterns
 
-**Created Agent**: `/home/matpimenta/workspaces/np-spawner/.claude/agents/code-refactorer.md`
+**Created Agent**: `.claude/agents/code-refactorer.md`
 
 ```markdown
 ---

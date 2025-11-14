@@ -192,7 +192,7 @@ Return a summary (max 1,500 tokens) containing:
 
 ### Example 1: High-Quality Agent
 
-**Input**: `/home/matpimenta/workspaces/np-spawner/.claude/agents/test-coverage-analyzer.md`
+**Input**: `.claude/agents/test-coverage-analyzer.md`
 
 **Output**:
 ```
@@ -225,7 +225,7 @@ Agent is ready for use. Minor refinements optional.
 
 ### Example 2: Low-Quality Agent
 
-**Input**: `/home/matpimenta/workspaces/np-spawner/.claude/agents/poorly-defined-agent.md`
+**Input**: `.claude/agents/poorly-defined-agent.md`
 
 **Output**:
 ```
@@ -263,7 +263,7 @@ Consider restructuring using agent-spawner. This agent needs fundamental redesig
 
 ### Example 3: Medium-Quality Agent
 
-**Input**: `/home/matpimenta/workspaces/np-spawner/.claude/agents/code-formatter.md`
+**Input**: `.claude/agents/code-formatter.md`
 
 **Output**:
 ```

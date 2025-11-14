@@ -1,0 +1,214 @@
+{
+  "source_id": "stripe_payments",
+  "version": "1.0",
+  "description": "Stripe payment event schema",
+  "fields": [
+    {
+      "name": "id",
+      "type": "STRING",
+      "mode": "REQUIRED",
+      "description": "Stripe event ID",
+      "pattern": "^evt_[a-zA-Z0-9]+$"
+    },
+    {
+      "name": "type",
+      "type": "STRING",
+      "mode": "REQUIRED",
+      "description": "Event type",
+      "enum": [
+        "payment_intent.succeeded",
+        "payment_intent.failed",
+        "charge.refunded",
+        "customer.created"
+      ]
+    },
+    {
+      "name": "created",
+      "type": "TIMESTAMP",
+      "mode": "REQUIRED",
+      "description": "Event creation timestamp (UTC)"
+    },
+    {
+      "name": "livemode",
+      "type": "BOOL",
+      "mode": "REQUIRED",
+      "description": "Whether this is a production event"
+    },
+    {
+      "name": "data",
+      "type": "RECORD",
+      "mode": "REQUIRED",
+      "description": "Event data object",
+      "fields": [
+        {
+          "name": "object",
+          "type": "RECORD",
+          "mode": "REQUIRED",
+          "description": "The object that triggered the event",
+          "fields": [
+            {
+              "name": "id",
+              "type": "STRING",
+              "mode": "REQUIRED",
+              "description": "Object ID (payment_intent, charge, customer, etc.)"
+            },
+            {
+              "name": "object_type",
+              "type": "STRING",
+              "mode": "REQUIRED",
+              "description": "Object type"
+            },
+            {
+              "name": "amount",
+              "type": "INT64",
+              "mode": "NULLABLE",
+              "description": "Amount in cents",
+              "min_value": 0
+            },
+            {
+              "name": "amount_received",
+              "type": "INT64",
+              "mode": "NULLABLE",
+              "description": "Amount received in cents",
+              "min_value": 0
+            },
+            {
+              "name": "currency",
+              "type": "STRING",
+              "mode": "NULLABLE",
+              "description": "Three-letter ISO currency code",
+              "pattern": "^[a-z]{3}$"
+            },
+            {
+              "name": "customer",
+              "type": "STRING",
+              "mode": "NULLABLE",
+              "description": "Customer ID",
+              "pattern": "^cus_[a-zA-Z0-9]+$"
+            },
+            {
+              "name": "description",
+              "type": "STRING",
+              "mode": "NULLABLE",
+              "description": "Payment description"
+            },
+            {
+              "name": "status",
+              "type": "STRING",
+              "mode": "NULLABLE",
+              "description": "Payment status",
+              "enum": [
+                "succeeded",
+                "processing",
+                "requires_payment_method",
+                "requires_confirmation",
+                "requires_action",
+                "canceled",
+                "failed"
+              ]
+            },
+            {
+              "name": "payment_method",
+              "type": "STRING",
+              "mode": "NULLABLE",
+              "description": "Payment method ID"
+            },
+            {
+              "name": "receipt_email",
+              "type": "STRING",
+              "mode": "NULLABLE",
+              "description": "Email address for receipt"
+            },
+            {
+              "name": "metadata",
+              "type": "JSON",
+              "mode": "NULLABLE",
+              "description": "Custom metadata key-value pairs"
+            },
+            {
+              "name": "created",
+              "type": "TIMESTAMP",
+              "mode": "NULLABLE",
+              "description": "Object creation timestamp"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "request",
+      "type": "RECORD",
+      "mode": "NULLABLE",
+      "description": "Request information",
+      "fields": [
+        {
+          "name": "id",
+          "type": "STRING",
+          "mode": "NULLABLE",
+          "description": "Request ID"
+        },
+        {
+          "name": "idempotency_key",
+          "type": "STRING",
+          "mode": "NULLABLE",
+          "description": "Idempotency key for the request"
+        }
+      ]
+    }
+  ],
+  "partition": {
+    "type": "time",
+    "field": "created",
+    "granularity": "day"
+  },
+  "clustering": {
+    "fields": ["type", "livemode"]
+  },
+  "data_quality": {
+    "rules": [
+      {
+        "name": "id_format",
+        "field": "id",
+        "check": "matches_pattern",
+        "pattern": "^evt_[a-zA-Z0-9]+$",
+        "severity": "error"
+      },
+      {
+        "name": "type_valid",
+        "field": "type",
+        "check": "in_list",
+        "values": [
+          "payment_intent.succeeded",
+          "payment_intent.failed",
+          "charge.refunded",
+          "customer.created"
+        ],
+        "severity": "error"
+      },
+      {
+        "name": "amount_positive",
+        "field": "data.object.amount",
+        "check": "greater_than_or_equal",
+        "value": 0,
+        "severity": "error"
+      },
+      {
+        "name": "currency_format",
+        "field": "data.object.currency",
+        "check": "matches_pattern",
+        "pattern": "^[a-z]{3}$",
+        "severity": "warning"
+      }
+    ]
+  },
+  "pii_fields": [
+    "data.object.receipt_email",
+    "data.object.customer"
+  ],
+  "tags": {
+    "sensitivity": "restricted",
+    "domain": "finance",
+    "source_system": "stripe",
+    "compliance": "pci-dss"
+  }
+}

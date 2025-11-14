@@ -1,0 +1,72 @@
+graph TB
+    subgraph "Pattern 1: Batch File Ingestion"
+        P1_SOURCE[External System<br/>SFTP/S3/FTP] -->|Drop Files| P1_GCS[GCS Landing Bucket]
+        P1_GCS -->|Object Finalize Event| P1_CF[Cloud Function<br/>File Handler]
+        P1_CF -->|Publish Metadata| P1_PS[Pub/Sub Topic]
+        P1_PS -->|Subscribe| P1_DF[Dataflow<br/>File Reader]
+        P1_DF -->|Process| P1_DEST[Bronze Storage]
+
+        style P1_PS fill:#4285f4,stroke:#333,stroke-width:2px,color:#fff
+    end
+
+    subgraph "Pattern 2: Streaming API Ingestion"
+        P2_API[REST API<br/>Webhook] -->|HTTP POST| P2_CR[Cloud Run<br/>Webhook Receiver]
+        P2_SCHEDULE[Cloud Scheduler] -->|Trigger Poll| P2_CR2[Cloud Run<br/>API Poller]
+        P2_CR2 -->|HTTP GET| P2_EXTERNAL[External API<br/>Stripe, Salesforce]
+        P2_CR -->|Publish Event| P2_PS[Pub/Sub Topic]
+        P2_CR2 -->|Publish Event| P2_PS
+        P2_PS -->|Subscribe| P2_DF[Dataflow<br/>Stream Processor]
+        P2_DF -->|Process| P2_DEST[Bronze Storage]
+
+        style P2_PS fill:#4285f4,stroke:#333,stroke-width:2px,color:#fff
+    end
+
+    subgraph "Pattern 3: Database CDC"
+        P3_DB[(Source Database<br/>PostgreSQL/MySQL)] -->|Capture Changes| P3_DS[Datastream<br/>CDC Service]
+        P3_DS -->|Publish Change Event| P3_PS[Pub/Sub Topic]
+        P3_PS -->|Subscribe| P3_DF[Dataflow<br/>CDC Processor]
+        P3_DF -->|Merge Changes| P3_DEST[Bronze Storage]
+        P3_DF -->|Real-time Sync| P3_BQ[(BigQuery<br/>Replica)]
+
+        style P3_PS fill:#4285f4,stroke:#333,stroke-width:2px,color:#fff
+    end
+
+    subgraph "Pattern 4: Cloud-to-Cloud Transfer"
+        P4_S3[(AWS S3<br/>Source Bucket)] -->|Scheduled Transfer| P4_TS[Storage Transfer<br/>Service]
+        P4_AZURE[(Azure Blob<br/>Source Container)] -->|Scheduled Transfer| P4_TS
+        P4_TS -->|Copy Files| P4_GCS[GCS Landing Bucket]
+        P4_GCS -->|Object Finalize Event| P4_CF[Cloud Function<br/>Transfer Complete]
+        P4_CF -->|Publish Event| P4_PS[Pub/Sub Topic]
+        P4_PS -->|Subscribe| P4_DF[Dataflow<br/>Batch Processor]
+        P4_DF -->|Process| P4_DEST[Bronze Storage]
+
+        style P4_PS fill:#4285f4,stroke:#333,stroke-width:2px,color:#fff
+    end
+
+    subgraph "Pattern 5: Event Streaming (Direct Pub/Sub)"
+        P5_IOT[IoT Devices] -->|Pub/Sub SDK| P5_PS[Pub/Sub Topic]
+        P5_APP[Application Events] -->|Pub/Sub SDK| P5_PS
+        P5_CLICK[Clickstream] -->|Pub/Sub SDK| P5_PS
+        P5_PS -->|Subscribe| P5_DF[Dataflow<br/>Window & Aggregate]
+        P5_DF -->|Batch Write| P5_DEST[Bronze Storage]
+        P5_DF -->|Real-time Write| P5_BQ[(BigQuery<br/>Streaming Insert)]
+
+        style P5_PS fill:#4285f4,stroke:#333,stroke-width:2px,color:#fff
+    end
+
+    subgraph "Unified Processing"
+        P1_DEST -.->|All Patterns Converge| UNIFIED[Standardized<br/>Bronze → Silver → Gold<br/>Pipeline]
+        P2_DEST -.->|All Patterns Converge| UNIFIED
+        P3_DEST -.->|All Patterns Converge| UNIFIED
+        P4_DEST -.->|All Patterns Converge| UNIFIED
+        P5_DEST -.->|All Patterns Converge| UNIFIED
+
+        style UNIFIED fill:#34a853,stroke:#333,stroke-width:3px,color:#fff
+    end
+
+    classDef pattern fill:#e8f5e9,stroke:#4caf50,stroke-width:2px
+    class P1_SOURCE,P1_GCS,P1_CF,P1_DF pattern
+    class P2_API,P2_CR,P2_CR2,P2_SCHEDULE,P2_DF pattern
+    class P3_DB,P3_DS,P3_DF pattern
+    class P4_S3,P4_AZURE,P4_TS,P4_GCS,P4_CF,P4_DF pattern
+    class P5_IOT,P5_APP,P5_CLICK,P5_DF pattern

@@ -1,0 +1,162 @@
+# Connector Configuration Template
+# Copy this file and customize for your data source
+
+source_id: example_source  # Unique identifier (lowercase, underscores only)
+display_name: "Example Data Source"
+description: "Brief description of the data source and purpose"
+
+# Ingestion Configuration
+ingestion:
+  # Pattern type: batch_file | streaming_api | database_cdc | cloud_transfer | event_streaming
+  pattern: batch_file
+
+  # Pattern-specific configuration
+  # For batch_file:
+  location: gs://landing-zone/example/  # GCS path for files
+  schedule: "0 3 * * *"  # Cron schedule (3 AM daily)
+  format: json  # csv | json | parquet | avro
+  compression: gzip  # none | gzip | snappy | bzip2
+
+  # For streaming_api:
+  # connector_type: rest_api | webhook
+  # api_endpoint: https://api.example.com/v1/data
+  # auth_type: bearer_token | api_key | oauth2
+  # secret_name: example-api-key  # Secret Manager secret name
+  # poll_interval: 60s  # For polling
+  # webhook_path: /webhooks/example  # For webhooks
+
+  # For database_cdc:
+  # connector_type: datastream
+  # database_type: postgresql | mysql | oracle | sqlserver
+  # connection_profile: projects/xxx/locations/us-central1/connectionProfiles/db-prod
+  # tables:
+  #   - table1
+  #   - table2
+
+  # For cloud_transfer:
+  # source_type: s3 | azure_blob | gcs
+  # source_bucket: source-bucket-name
+  # source_path: path/to/data/
+  # schedule: "0 */6 * * *"  # Every 6 hours
+  # destination: gs://landing-zone/imports/
+
+  # For event_streaming:
+  # pubsub_topic: projects/my-project/topics/events
+  # message_format: json | avro | protobuf
+  # window_size: 60s  # For windowed aggregations
+
+# Schema Configuration
+schema:
+  file: schemas/example_source.json  # Path to JSON schema file
+  validation: strict  # strict | lenient | none
+  evolution: backward_compatible  # backward_compatible | forward_compatible | full | none
+
+# Processing Configuration
+processing:
+  # Bronze to Silver transformations
+  bronze_to_silver:
+    # Deduplication
+    - deduplication:
+        key: [id, timestamp]  # Composite key for deduplication
+
+    # Data quality checks
+    - data_quality:
+        rules:
+          - field: email
+            check: valid_email
+          - field: amount
+            check: positive_number
+          - field: created_at
+            check: valid_timestamp
+
+    # Data cleansing
+    - cleansing:
+        - field: email
+          transform: lowercase
+        - field: phone
+          transform: normalize_phone_us
+
+  # Silver to Gold transformations
+  silver_to_gold:
+    # Joins with other tables
+    - join:
+        table: gold.customers
+        type: left  # left | inner | full
+        on: customer_id
+
+    # Aggregations
+    - aggregate:
+        group_by: [customer_id, date]
+        metrics:
+          - sum(amount) as total_amount
+          - count(*) as transaction_count
+          - avg(amount) as avg_amount
+
+    # Window functions
+    - window:
+        partition_by: customer_id
+        order_by: timestamp
+        functions:
+          - row_number() as row_num
+          - lag(amount, 1) as prev_amount
+
+# Serving Configuration
+serving:
+  third_party_api: true  # Expose via REST API
+  reporting: true  # Include in reporting dashboards
+  ml_features: false  # Export to feature store
+
+  # API-specific settings
+  api:
+    rate_limit: 1000  # Requests per hour
+    authentication: oauth2  # oauth2 | api_key
+    endpoints:
+      - path: /v1/example/{id}
+        method: GET
+        description: Get record by ID
+      - path: /v1/example
+        method: GET
+        description: List records with filtering
+
+# Monitoring Configuration
+monitoring:
+  sla_minutes: 60  # Data freshness SLA (from source timestamp to available in Silver)
+  alert_email: data-team@example.com
+  metrics:
+    - record_count  # Track daily record counts
+    - latency_p95  # 95th percentile latency
+    - error_rate  # Percentage of failed records
+    - data_freshness  # Time since last update
+
+  # Custom alerts
+  alerts:
+    - name: Low Volume
+      condition: record_count < 1000
+      severity: warning
+    - name: High Error Rate
+      condition: error_rate > 5%
+      severity: critical
+    - name: SLA Breach
+      condition: data_freshness > sla_minutes
+      severity: critical
+
+# Retention Configuration
+retention:
+  bronze_days: 2555  # 7 years
+  silver_days: 1825  # 5 years
+  gold_days: -1  # Indefinite (always hot)
+
+# Tags for organization and cost allocation
+tags:
+  team: data-engineering
+  domain: sales  # sales | marketing | product | finance
+  sensitivity: internal  # public | internal | confidential | restricted
+  cost_center: "12345"
+
+# Additional metadata
+metadata:
+  owner: john.doe@example.com
+  documentation_url: https://wiki.example.com/data/sources/example
+  business_purpose: "Track customer transactions for revenue reporting"
+  data_classification: PII  # PII | non-PII
+  compliance: GDPR  # GDPR | CCPA | HIPAA | none

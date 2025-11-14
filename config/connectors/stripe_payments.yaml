@@ -1,0 +1,112 @@
+# Stripe Payments Connector Configuration
+
+source_id: stripe_payments
+display_name: "Stripe Payment Events"
+description: "Real-time payment events from Stripe via webhooks"
+
+# Ingestion Configuration
+ingestion:
+  pattern: streaming_api
+  connector_type: webhook
+  webhook_path: /webhooks/stripe
+  auth_type: webhook_signature  # Stripe webhook signature verification
+  secret_name: stripe-webhook-secret
+  event_types:
+    - payment_intent.succeeded
+    - payment_intent.failed
+    - charge.refunded
+    - customer.created
+
+# Schema Configuration
+schema:
+  file: schemas/stripe_payments.json
+  validation: lenient  # Stripe may add fields
+  evolution: forward_compatible
+
+# Processing Configuration
+processing:
+  bronze_to_silver:
+    - deduplication:
+        key: [id, created]  # Stripe event ID and timestamp
+
+    - data_quality:
+        rules:
+          - field: id
+            check: not_null
+          - field: type
+            check: in_list
+            values: [payment_intent.succeeded, payment_intent.failed, charge.refunded, customer.created]
+          - field: amount
+            check: positive_number
+
+    - enrichment:
+        - add_field: processing_date
+          value: CURRENT_DATE()
+        - add_field: amount_usd
+          value: amount / 100  # Convert cents to dollars
+
+  silver_to_gold:
+    - join:
+        table: gold.customers
+        type: left
+        on: customer_id
+
+    - aggregate:
+        group_by: [DATE(created), type]
+        metrics:
+          - count(*) as event_count
+          - sum(amount_usd) as total_amount
+          - avg(amount_usd) as avg_amount
+          - count(DISTINCT customer_id) as unique_customers
+
+# Serving Configuration
+serving:
+  third_party_api: false  # Sensitive payment data
+  reporting: true
+  ml_features: true
+
+  api:
+    rate_limit: 0  # Not exposed externally
+    authentication: none
+
+# Monitoring Configuration
+monitoring:
+  sla_minutes: 5  # Real-time processing
+  alert_email: payments-team@example.com
+  metrics:
+    - record_count
+    - latency_p95
+    - error_rate
+    - data_freshness
+
+  alerts:
+    - name: Processing Delay
+      condition: data_freshness > 10
+      severity: critical
+    - name: High Failed Payments
+      condition: failed_payment_rate > 10%
+      severity: warning
+    - name: Zero Events
+      condition: record_count == 0 AND hour_of_day BETWEEN 9 AND 17
+      severity: warning
+
+# Retention Configuration
+retention:
+  bronze_days: 2555  # Keep raw payment data for 7 years (compliance)
+  silver_days: 2555
+  gold_days: -1
+
+# Tags
+tags:
+  team: payments-engineering
+  domain: finance
+  sensitivity: restricted  # PCI data
+  cost_center: "99999"
+
+# Metadata
+metadata:
+  owner: payments-data@example.com
+  documentation_url: https://wiki.example.com/data/stripe
+  business_purpose: "Real-time payment tracking for revenue recognition and fraud detection"
+  data_classification: PII
+  compliance: PCI-DSS

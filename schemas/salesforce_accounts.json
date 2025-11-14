@@ -1,0 +1,165 @@
+{
+  "source_id": "salesforce_accounts",
+  "version": "1.0",
+  "description": "Salesforce Account object schema",
+  "fields": [
+    {
+      "name": "Id",
+      "type": "STRING",
+      "mode": "REQUIRED",
+      "description": "Salesforce Account ID (18-character)",
+      "pattern": "^[a-zA-Z0-9]{18}$"
+    },
+    {
+      "name": "Name",
+      "type": "STRING",
+      "mode": "REQUIRED",
+      "description": "Account name",
+      "max_length": 255
+    },
+    {
+      "name": "BillingStreet",
+      "type": "STRING",
+      "mode": "NULLABLE",
+      "description": "Billing street address"
+    },
+    {
+      "name": "BillingCity",
+      "type": "STRING",
+      "mode": "NULLABLE",
+      "description": "Billing city"
+    },
+    {
+      "name": "BillingState",
+      "type": "STRING",
+      "mode": "NULLABLE",
+      "description": "Billing state/province"
+    },
+    {
+      "name": "BillingPostalCode",
+      "type": "STRING",
+      "mode": "NULLABLE",
+      "description": "Billing postal code"
+    },
+    {
+      "name": "BillingCountry",
+      "type": "STRING",
+      "mode": "NULLABLE",
+      "description": "Billing country"
+    },
+    {
+      "name": "Industry",
+      "type": "STRING",
+      "mode": "NULLABLE",
+      "description": "Industry classification"
+    },
+    {
+      "name": "AnnualRevenue",
+      "type": "FLOAT64",
+      "mode": "NULLABLE",
+      "description": "Annual revenue in USD",
+      "min_value": 0.0
+    },
+    {
+      "name": "NumberOfEmployees",
+      "type": "INT64",
+      "mode": "NULLABLE",
+      "description": "Number of employees",
+      "min_value": 0
+    },
+    {
+      "name": "Type",
+      "type": "STRING",
+      "mode": "NULLABLE",
+      "description": "Account type",
+      "enum": ["Prospect", "Customer", "Partner", "Other"]
+    },
+    {
+      "name": "Website",
+      "type": "STRING",
+      "mode": "NULLABLE",
+      "description": "Company website URL"
+    },
+    {
+      "name": "Phone",
+      "type": "STRING",
+      "mode": "NULLABLE",
+      "description": "Primary phone number"
+    },
+    {
+      "name": "OwnerId",
+      "type": "STRING",
+      "mode": "NULLABLE",
+      "description": "Salesforce User ID of account owner"
+    },
+    {
+      "name": "CreatedDate",
+      "type": "TIMESTAMP",
+      "mode": "REQUIRED",
+      "description": "Date when account was created in Salesforce"
+    },
+    {
+      "name": "LastModifiedDate",
+      "type": "TIMESTAMP",
+      "mode": "REQUIRED",
+      "description": "Date when account was last modified"
+    },
+    {
+      "name": "IsDeleted",
+      "type": "BOOL",
+      "mode": "NULLABLE",
+      "description": "Soft delete flag"
+    }
+  ],
+  "partition": {
+    "type": "time",
+    "field": "LastModifiedDate",
+    "granularity": "day"
+  },
+  "clustering": {
+    "fields": ["Industry", "BillingCountry", "Type"]
+  },
+  "data_quality": {
+    "rules": [
+      {
+        "name": "id_format",
+        "field": "Id",
+        "check": "matches_pattern",
+        "pattern": "^[a-zA-Z0-9]{18}$",
+        "severity": "error"
+      },
+      {
+        "name": "name_not_empty",
+        "field": "Name",
+        "check": "not_null",
+        "severity": "error"
+      },
+      {
+        "name": "revenue_positive",
+        "field": "AnnualRevenue",
+        "check": "greater_than_or_equal",
+        "value": 0,
+        "severity": "error"
+      },
+      {
+        "name": "employees_positive",
+        "field": "NumberOfEmployees",
+        "check": "greater_than_or_equal",
+        "value": 0,
+        "severity": "error"
+      }
+    ]
+  },
+  "pii_fields": [
+    "BillingStreet",
+    "BillingCity",
+    "BillingState",
+    "BillingPostalCode",
+    "Phone"
+  ],
+  "tags": {
+    "sensitivity": "confidential",
+    "domain": "sales",
+    "source_system": "salesforce"
+  }
+}

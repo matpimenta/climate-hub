@@ -1,0 +1,125 @@
+graph TB
+    subgraph "Data Sources"
+        DS1[SaaS APIs<br/>Salesforce, Stripe, etc.]
+        DS2[Databases<br/>PostgreSQL, MySQL]
+        DS3[File Systems<br/>SFTP, S3, Azure Blob]
+        DS4[Event Streams<br/>IoT, Clickstream]
+        DS5[Cloud Storage<br/>GCS, S3]
+    end
+
+    subgraph "Ingestion Layer"
+        CR1[Cloud Run<br/>API Connectors]
+        CF1[Cloud Functions<br/>Event Handlers]
+        DS_CDC[Datastream<br/>Database CDC]
+        TS[Transfer Service<br/>Cloud-to-Cloud]
+        SDK[Pub/Sub SDK<br/>Direct Publishing]
+
+        DS1 --> CR1
+        DS2 --> DS_CDC
+        DS3 --> CF1
+        DS4 --> SDK
+        DS5 --> TS
+    end
+
+    subgraph "Message Bus"
+        PS[Cloud Pub/Sub<br/>Central Event Hub]
+
+        CR1 --> PS
+        CF1 --> PS
+        DS_CDC --> PS
+        TS --> PS
+        SDK --> PS
+    end
+
+    subgraph "Processing Layer"
+        DF1[Dataflow<br/>Stream Processing]
+        DF2[Dataflow<br/>Batch Processing]
+        CC[Cloud Composer<br/>Orchestration]
+
+        PS --> DF1
+        CC --> DF2
+    end
+
+    subgraph "Storage Layer - Multi-Zone Architecture"
+        subgraph "Bronze Zone - Raw Data"
+            GCS1[Cloud Storage<br/>Original Format<br/>Immutable]
+        end
+
+        subgraph "Silver Zone - Processed Data"
+            GCS2[Cloud Storage<br/>Parquet Format<br/>Cleaned & Validated]
+        end
+
+        subgraph "Gold Zone - Curated Data"
+            BQ[BigQuery<br/>Partitioned & Clustered<br/>Business Ready]
+        end
+
+        DF1 --> GCS1
+        DF2 --> GCS1
+        GCS1 --> DF2
+        DF2 --> GCS2
+        GCS2 --> DF2
+        DF2 --> BQ
+    end
+
+    subgraph "Governance & Metadata"
+        DC[Data Catalog<br/>Schema Registry]
+        DQ[Data Quality<br/>Validation Rules]
+
+        DF1 -.->|Register Schema| DC
+        DF2 -.->|Quality Checks| DQ
+    end
+
+    subgraph "Serving Layer"
+        subgraph "Third-Party Access"
+            API[Cloud Endpoints<br/>REST API]
+            CR_API[Cloud Run<br/>API Server]
+
+            API --> CR_API
+            CR_API --> BQ
+        end
+
+        subgraph "Reporting & Dashboards"
+            MV[BigQuery<br/>Materialized Views]
+            LOOKER[Looker<br/>Dashboards]
+
+            BQ --> MV
+            MV --> LOOKER
+        end
+
+        subgraph "ML/AI Features"
+            FS[Vertex AI<br/>Feature Store]
+            VAI[Vertex AI<br/>Model Training & Serving]
+
+            BQ --> FS
+            FS --> VAI
+        end
+    end
+
+    subgraph "Monitoring & Security"
+        CM[Cloud Monitoring<br/>Metrics & Alerts]
+        CL[Cloud Logging<br/>Structured Logs]
+        IAM[IAM & VPC-SC<br/>Access Control]
+        SM[Secret Manager<br/>Credentials]
+
+        DF1 -.->|Logs & Metrics| CM
+        DF2 -.->|Logs & Metrics| CM
+        CR1 -.->|Logs| CL
+        CR_API -.->|Logs| CL
+    end
+
+    subgraph "External Consumers"
+        EXT1[Third-Party Clients<br/>OAuth 2.0]
+        EXT2[Web Dashboard<br/>Users]
+        EXT3[ML Models<br/>Predictions]
+
+        API --> EXT1
+        LOOKER --> EXT2
+        VAI --> EXT3
+    end
+
+    style PS fill:#4285f4,stroke:#333,stroke-width:3px,color:#fff
+    style BQ fill:#669df6,stroke:#333,stroke-width:2px,color:#fff
+    style GCS1 fill:#ffa726,stroke:#333,stroke-width:2px
+    style GCS2 fill:#ffb74d,stroke:#333,stroke-width:2px
+    style DF1 fill:#34a853,stroke:#333,stroke-width:2px,color:#fff
+    style DF2 fill:#34a853,stroke:#333,stroke-width:2px,color:#fff

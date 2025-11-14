@@ -1,0 +1,60 @@
+graph LR
+    subgraph "Step 1: Ingestion"
+        SOURCE[Data Source] -->|Raw Data| CONNECTOR[Connector]
+        CONNECTOR -->|Publish Event| PUBSUB[Pub/Sub Topic]
+    end
+
+    subgraph "Step 2: Landing (Bronze Zone)"
+        PUBSUB -->|Subscribe| DF_INGEST[Dataflow<br/>Ingestion Pipeline]
+        DF_INGEST -->|Validate Schema| VALIDATE{Schema<br/>Valid?}
+        VALIDATE -->|Yes| BRONZE[(Bronze Storage<br/>GCS<br/>Original Format)]
+        VALIDATE -->|No| DLQ1[(Dead Letter<br/>Queue)]
+        DF_INGEST -.->|Register Metadata| CATALOG[Data Catalog]
+    end
+
+    subgraph "Step 3: Processing (Silver Zone)"
+        COMPOSER[Cloud Composer<br/>Scheduler] -->|Trigger Daily| DF_PROCESS[Dataflow<br/>Processing Pipeline]
+        BRONZE -->|Read Raw Data| DF_PROCESS
+        DF_PROCESS -->|Clean & Transform| CLEAN[Data Cleaning<br/>Deduplication<br/>Validation]
+        CLEAN -->|Quality Check| DQ{Data Quality<br/>Pass?}
+        DQ -->|Pass| SILVER[(Silver Storage<br/>GCS Parquet<br/>Cleaned Data)]
+        DQ -->|Fail| DLQ2[(Quarantine<br/>Bucket)]
+        DQ -.->|Alert| ALERT1[Alert Team]
+    end
+
+    subgraph "Step 4: Curation (Gold Zone)"
+        SILVER -->|Read Processed| DF_CURATE[Dataflow<br/>Curation Pipeline]
+        DF_CURATE -->|Apply Business Logic| TRANSFORM[Aggregations<br/>Joins<br/>Feature Engineering]
+        TRANSFORM -->|Load| GOLD[(BigQuery Gold<br/>Curated Tables<br/>Partitioned & Clustered)]
+        DF_CURATE -->|Update| MV[Materialized Views]
+    end
+
+    subgraph "Step 5: Serving"
+        GOLD -->|Query| API_SERVER[API Server<br/>Cloud Run]
+        API_SERVER -->|REST API| CLIENT1[Third-Party<br/>Clients]
+
+        MV -->|Connect| LOOKER[Looker<br/>Dashboards]
+        LOOKER -->|Display| CLIENT2[Web Users]
+
+        GOLD -->|Export Features| FEATURE_STORE[Vertex AI<br/>Feature Store]
+        FEATURE_STORE -->|Online Serving| ML_MODEL[ML Models]
+        FEATURE_STORE -->|Offline Serving| ML_TRAINING[Model Training]
+    end
+
+    subgraph "Monitoring & Observability"
+        DF_INGEST -.->|Metrics| MONITORING[Cloud Monitoring]
+        DF_PROCESS -.->|Metrics| MONITORING
+        DF_CURATE -.->|Metrics| MONITORING
+        API_SERVER -.->|Logs| LOGGING[Cloud Logging]
+        MONITORING -.->|SLA Breach| ALERT2[Alerts]
+    end
+
+    style PUBSUB fill:#4285f4,stroke:#333,stroke-width:2px,color:#fff
+    style BRONZE fill:#ffa726,stroke:#333,stroke-width:2px
+    style SILVER fill:#ffb74d,stroke:#333,stroke-width:2px
+    style GOLD fill:#669df6,stroke:#333,stroke-width:2px,color:#fff
+    style DF_INGEST fill:#34a853,stroke:#333,stroke-width:2px,color:#fff
+    style DF_PROCESS fill:#34a853,stroke:#333,stroke-width:2px,color:#fff
+    style DF_CURATE fill:#34a853,stroke:#333,stroke-width:2px,color:#fff
+    style DLQ1 fill:#ea4335,stroke:#333,stroke-width:2px,color:#fff
+    style DLQ2 fill:#ea4335,stroke:#333,stroke-width:2px,color:#fff

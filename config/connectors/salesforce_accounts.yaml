@@ -1,0 +1,107 @@
+# Salesforce Accounts Connector Configuration
+
+source_id: salesforce_accounts
+display_name: "Salesforce Accounts"
+description: "Daily export of Salesforce account data including customer details and account metadata"
+
+# Ingestion Configuration
+ingestion:
+  pattern: streaming_api
+  connector_type: rest_api
+  api_endpoint: https://example.salesforce.com/services/data/v58.0/query
+  auth_type: oauth2
+  secret_name: salesforce-oauth-credentials
+  poll_interval: 300s  # Poll every 5 minutes
+  query_params:
+    q: "SELECT Id, Name, BillingCity, BillingCountry, Industry, AnnualRevenue, CreatedDate, LastModifiedDate FROM Account WHERE LastModifiedDate > LAST_N_MINUTES:5"
+
+# Schema Configuration
+schema:
+  file: schemas/salesforce_accounts.json
+  validation: strict
+  evolution: backward_compatible
+
+# Processing Configuration
+processing:
+  bronze_to_silver:
+    - deduplication:
+        key: [Id, LastModifiedDate]
+
+    - data_quality:
+        rules:
+          - field: Id
+            check: not_null
+          - field: Name
+            check: not_null
+          - field: AnnualRevenue
+            check: positive_number_or_null
+
+    - cleansing:
+        - field: BillingCountry
+          transform: uppercase
+        - field: Industry
+          transform: trim
+
+  silver_to_gold:
+    - aggregate:
+        group_by: [Industry, BillingCountry]
+        metrics:
+          - count(*) as account_count
+          - sum(AnnualRevenue) as total_revenue
+          - avg(AnnualRevenue) as avg_revenue
+
+# Serving Configuration
+serving:
+  third_party_api: true
+  reporting: true
+  ml_features: true
+
+  api:
+    rate_limit: 5000
+    authentication: oauth2
+    endpoints:
+      - path: /v1/accounts/{id}
+        method: GET
+        description: Get account by Salesforce ID
+      - path: /v1/accounts
+        method: GET
+        description: List accounts with filters
+
+# Monitoring Configuration
+monitoring:
+  sla_minutes: 30
+  alert_email: sales-data-team@example.com
+  metrics:
+    - record_count
+    - latency_p95
+    - error_rate
+    - data_freshness
+
+  alerts:
+    - name: No Updates
+      condition: data_freshness > 60
+      severity: warning
+    - name: High Error Rate
+      condition: error_rate > 2%
+      severity: critical
+
+# Retention Configuration
+retention:
+  bronze_days: 2555
+  silver_days: 1825
+  gold_days: -1
+
+# Tags
+tags:
+  team: sales-engineering
+  domain: sales
+  sensitivity: confidential
+  cost_center: "54321"
+
+# Metadata
+metadata:
+  owner: sales-data@example.com
+  documentation_url: https://wiki.example.com/data/salesforce
+  business_purpose: "Customer account data for sales analytics and revenue forecasting"
+  data_classification: PII
+  compliance: GDPR
