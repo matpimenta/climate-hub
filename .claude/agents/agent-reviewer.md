@@ -98,7 +98,7 @@ Check for presence and quality of required sections:
 - When to Invoke (with specific conditions and exclusions)
 - Process (step-by-step instructions)
 - Output Requirements (format, size, content specifications)
-- Examples (at least one concrete example)
+- Examples (at least one concrete example - minimal, focused on unique patterns)
 - Constraints (limitations, things to avoid)
 - Success Criteria (measurable checkboxes)
 - Tool Justification (explaining each tool and exclusions)
@@ -108,37 +108,44 @@ Check for presence and quality of required sections:
 - Each section has substantial, relevant content
 - Frontmatter is valid YAML
 - Success criteria are measurable checkboxes
+- **Agent is concise (under 500 lines, ideally under 300)**
+- **No verbose explanations of common knowledge**
 
 **Award 1 point if:**
 - 6-8 sections present
 - Most sections have adequate content
 - Some sections are minimal or missing
+- OR agent is overly verbose (500+ lines) with redundant content
 
 **Award 0 points if:**
 - 5 or fewer sections present
 - Multiple critical sections missing
 - Sections present but lack meaningful content
+- OR agent is excessively verbose (800+ lines) with encyclopedic content
 
 ### Step 6: Evaluate Examples & Guidance (0-2 points)
 
 **Award 2 points if:**
 - At least one complete example with input and expected output
-- Examples are concrete and realistic
+- Examples are concrete, realistic, and **minimal** (no verbose explanations)
+- Examples focus on unique/non-obvious patterns, not common knowledge
 - Success criteria include 5+ measurable checkpoints
 - Output requirements specify token limits and format
 - "When to Invoke" includes both positive and negative conditions (Do/Do NOT)
 
 **Award 1 point if:**
-- Example present but incomplete or abstract
+- Example present but incomplete, abstract, or overly verbose
 - Success criteria exist but aren't measurable
 - Output requirements mentioned but not detailed
 - "When to Invoke" only covers positive or negative cases
+- Examples explain common knowledge unnecessarily
 
 **Award 0 points if:**
 - No examples provided
 - Success criteria missing or non-measurable
 - Output requirements not specified
 - "When to Invoke" missing or vague
+- Examples are encyclopedic reference material vs. actionable guidance
 
 ### Step 7: Calculate Overall Score
 1. Sum scores from all five categories (max 10 points)
@@ -154,6 +161,8 @@ Check for presence and quality of required sections:
 2. Identify specific weaknesses (what scores low and specific improvements)
 3. Provide actionable recommendations prioritized by impact
 4. Note any red flags (e.g., security concerns, contradictory instructions)
+5. **Flag verbosity issues**: If agent is >500 lines, identify what should be removed
+6. **Flag redundant content**: Highlight explanations of common knowledge that should be cut
 
 ## Output Requirements
 
@@ -309,6 +318,9 @@ Use agent-refiner to address weaknesses. Agent is functional but needs clarity i
 - MUST include at least 3 specific, actionable recommendations
 - If agent uses domain-specific patterns not covered by general criteria, note in feedback but don't penalize
 - Scores must be integers (0, 1, or 2) for each category - no decimals or ranges
+- **MUST penalize verbosity**: Agents >500 lines lose completeness points, >800 lines score 0
+- **MUST flag redundant content**: Identify explanations of common knowledge that bloat the definition
+- **MUST prioritize conciseness**: Recommend removing encyclopedic content in favor of focused guidance
 
 ## Success Criteria
 
