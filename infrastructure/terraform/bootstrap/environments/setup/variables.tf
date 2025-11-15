@@ -54,6 +54,9 @@ variable "service_account_roles" {
     "roles/editor",
     "roles/iam.securityAdmin",
     "roles/resourcemanager.projectIamAdmin",
+    "roles/compute.networkAdmin",
+    "roles/servicenetworking.networksAdmin",
+    "roles/bigquery.admin",
   ]
 }
 

@@ -471,7 +471,7 @@ module "pubsub" {
       retain_acked_messages        = false
       enable_exactly_once_delivery = false # For high throughput
       dead_letter_topic            = "data_ingestion_dlq"
-      max_delivery_attempts        = 3
+      max_delivery_attempts        = 5
     }
   }
 

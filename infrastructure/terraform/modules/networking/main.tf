@@ -148,7 +148,7 @@ resource "google_compute_firewall" "deny_all_ingress" {
 
 # VPC Serverless Connector for Cloud Functions and Cloud Run
 resource "google_vpc_access_connector" "connector" {
-  name    = "${var.name_prefix}-vpc-connector"
+  name    = "${var.environment}-vpc-conn"
   project = var.project_id
   region  = var.region
 
