@@ -16,10 +16,10 @@ resource "google_bigquery_dataset" "datasets" {
   for_each = var.datasets
 
   project    = var.project_id
-  dataset_id = "${var.name_prefix}_${each.key}"
+  dataset_id = "${replace(var.name_prefix, "-", "_")}_${each.key}"
   location   = var.location
 
-  friendly_name                   = titlecase("${var.environment} - ${each.key} zone")
+  friendly_name                   = title("${var.environment} - ${each.key} zone")
   description                     = each.value.description
   delete_contents_on_destroy      = each.value.delete_contents_on_destroy
   default_partition_expiration_ms = each.value.default_partition_expiration_ms

@@ -19,7 +19,7 @@ locals {
       location        = var.region
       storage_class   = var.bronze_zone.storage_class
       versioning      = var.bronze_zone.enable_versioning
-      lifecycle_rules = var.bronze_zone.retention_days > 0 ? concat(
+      lifecycle_rules = var.bronze_zone.retention_days <= 0 ? null : concat(
         var.bronze_zone.nearline_after_days != null ? [{
           action = {
             type          = "SetStorageClass"
@@ -45,10 +45,10 @@ locals {
             type = "Delete"
           }
           condition = {
-            age = var.bronze_zone.retention_days
+            age = tonumber(var.bronze_zone.retention_days)
           }
         }]
-      ) : []
+      )
     }
 
     silver = {
@@ -56,7 +56,7 @@ locals {
       location        = var.region
       storage_class   = var.silver_zone.storage_class
       versioning      = var.silver_zone.enable_versioning
-      lifecycle_rules = var.silver_zone.retention_days > 0 ? concat(
+      lifecycle_rules = var.silver_zone.retention_days <= 0 ? null : concat(
         var.silver_zone.nearline_after_days != null ? [{
           action = {
             type          = "SetStorageClass"
@@ -82,10 +82,10 @@ locals {
             type = "Delete"
           }
           condition = {
-            age = var.silver_zone.retention_days
+            age = tonumber(var.silver_zone.retention_days)
           }
         }]
-      ) : []
+      )
     }
 
     landing = {

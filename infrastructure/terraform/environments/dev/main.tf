@@ -16,8 +16,9 @@ terraform {
   }
 
   # Backend configuration for storing Terraform state in GCS
+  # Note: Backend configuration cannot use variables
+  # The bucket name will be provided via -backend-config flag during init
   backend "gcs" {
-    bucket = "${var.project_id}-terraform-state" # Will be interpolated at init time
     prefix = "environments/dev"
   }
 }
@@ -265,6 +266,10 @@ module "storage" {
   # Encryption key from KMS (if CMEK enabled)
   encryption_key = var.enable_cmek ? module.security.kms_crypto_keys["storage"].id : null
 
+  # Service accounts for IAM bindings
+  dataflow_service_account        = module.security.service_accounts["dataflow"].email
+  cloud_functions_service_account = module.security.service_accounts["cloud_functions"].email
+
   depends_on = [module.project_services, module.security]
 }
 
@@ -472,6 +477,9 @@ module "pubsub" {
 
   # Encryption key from KMS (if CMEK enabled)
   encryption_key = var.enable_cmek ? module.security.kms_crypto_keys["pubsub"].id : null
+
+  # Dataflow service account for IAM bindings
+  dataflow_service_account = module.security.service_accounts["dataflow"].email
 
   depends_on = [module.project_services, module.security]
 }

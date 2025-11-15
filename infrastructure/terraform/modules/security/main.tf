@@ -16,7 +16,7 @@ resource "google_service_account" "service_accounts" {
   for_each = var.service_accounts
 
   project      = var.project_id
-  account_id   = "${var.name_prefix}-${each.key}"
+  account_id   = "${var.environment}-${replace(each.key, "_", "-")}"
   display_name = each.value.display_name
   description  = each.value.description
 }
@@ -85,7 +85,7 @@ resource "google_secret_manager_secret" "api_keys_placeholder" {
   secret_id = "${var.name_prefix}-api-key-placeholder"
 
   replication {
-    automatic = true
+    auto {}
   }
 
   labels = var.labels

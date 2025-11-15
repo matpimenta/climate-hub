@@ -27,7 +27,7 @@ resource "google_compute_network" "vpc" {
 resource "google_compute_subnetwork" "subnets" {
   for_each = var.subnets
 
-  name          = "${var.name_prefix}-subnet-${each.key}"
+  name          = "${var.name_prefix}-subnet-${replace(each.key, "_", "-")}"
   project       = var.project_id
   region        = each.value.region
   network       = google_compute_network.vpc.id

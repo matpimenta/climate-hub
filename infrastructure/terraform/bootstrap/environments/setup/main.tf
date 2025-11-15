@@ -16,8 +16,9 @@ terraform {
 
   # Note: This bootstrap configuration uses local state
   # After initial setup, you can migrate to remote state if desired
-  backend "local" {
-    path = "terraform.tfstate"
+  backend "gcs" {
+    prefix = "environments/setup"
+    bucket = "climate-hub-478222-terraform-state"
   }
 }
 
