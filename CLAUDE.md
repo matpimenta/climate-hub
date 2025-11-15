@@ -9,7 +9,7 @@ agents to handle complicated tasks.
 
 ## Documentation
 
-Only generate markdown files and documentation when asked.
+Only generate markdown files and documentation when asked. CLAUDE.md should always be updated when the project structure and new features and components are added. However, CLAUDE.md should be keep clean and concise.
 
 ## Terraform Validation
 

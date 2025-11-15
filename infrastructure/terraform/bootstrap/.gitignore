@@ -40,3 +40,5 @@ terraform.rc
 *.swp
 *.swo
 *~
+
+!environments/setup/terraform.tfvars

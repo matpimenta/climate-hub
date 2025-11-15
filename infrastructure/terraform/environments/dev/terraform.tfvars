@@ -10,10 +10,10 @@
 # ============================================================================
 
 # Your GCP project ID - REQUIRED
-project_id = "my-data-platform-dev"
+project_id = "climate-hub-478222"
 
 # GCP region for regional resources
-region = "us-central1"
+region = "europe-west2"
 
 # Cost center for billing allocation
 cost_center = "data-engineering"
@@ -54,7 +54,7 @@ enable_cross_region_replication = false
 # ============================================================================
 
 # BigQuery location (US, EU, or specific region like us-central1)
-bigquery_location = "US"
+bigquery_location = "EU"
 
 # ============================================================================
 # DATAFLOW CONFIGURATION
