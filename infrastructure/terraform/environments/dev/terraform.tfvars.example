@@ -1,0 +1,175 @@
+# GCP Data Platform - Example Configuration for Development Environment
+#
+# Copy this file to terraform.tfvars and update with your actual values:
+#   cp terraform.tfvars.example terraform.tfvars
+#
+# IMPORTANT: terraform.tfvars is in .gitignore - never commit it to version control!
+
+# ============================================================================
+# PROJECT CONFIGURATION (REQUIRED)
+# ============================================================================
+
+# Your GCP project ID - REQUIRED
+project_id = "my-data-platform-dev"
+
+# GCP region for regional resources
+region = "us-central1"
+
+# Cost center for billing allocation
+cost_center = "data-engineering"
+
+# ============================================================================
+# NETWORKING
+# ============================================================================
+
+# VPC CIDR block
+vpc_cidr = "10.0.0.0/16"
+
+# Subnet CIDR blocks (must be within VPC CIDR)
+dataflow_subnet_cidr  = "10.0.1.0/24"
+composer_subnet_cidr  = "10.0.2.0/24"
+cloud_run_subnet_cidr = "10.0.3.0/24"
+
+# Enable VPC Flow Logs (recommended for production)
+enable_vpc_flow_logs = true
+
+# ============================================================================
+# STORAGE RETENTION POLICIES
+# ============================================================================
+
+# Bronze zone retention (raw data) - 7 years
+bronze_retention_days = 2555
+
+# Silver zone retention (processed data) - 5 years
+silver_retention_days = 1825
+
+# Gold zone retention (curated data) - keep forever
+gold_retention_days = -1
+
+# Cross-region replication for disaster recovery (disabled in dev to save costs)
+enable_cross_region_replication = false
+
+# ============================================================================
+# BIGQUERY
+# ============================================================================
+
+# BigQuery location (US, EU, or specific region like us-central1)
+bigquery_location = "US"
+
+# ============================================================================
+# DATAFLOW CONFIGURATION
+# ============================================================================
+
+# Machine type for Dataflow workers
+# Options: n1-standard-1, n1-standard-2, n1-standard-4, n1-highmem-2, etc.
+dataflow_machine_type = "n1-standard-2"
+
+# Maximum number of Dataflow workers (auto-scaling)
+dataflow_max_workers = 10
+
+# Use preemptible VMs for cost savings (recommended for dev/staging)
+enable_preemptible_workers = true
+
+# ============================================================================
+# CLOUD COMPOSER (AIRFLOW)
+# ============================================================================
+
+# Enable Cloud Composer deployment
+# Set to false to skip Composer deployment (saves ~$300/month in dev)
+enable_composer = true
+
+# Number of Composer nodes
+composer_node_count = 3
+
+# Machine type for Composer nodes
+composer_machine_type = "n1-standard-2"
+
+# Disk size per Composer node (GB)
+composer_disk_size_gb = 30
+
+# ============================================================================
+# API GATEWAY
+# ============================================================================
+
+# Enable API Gateway for third-party data access
+enable_api_gateway = true
+
+# OAuth 2.0 configuration for API authentication
+oauth_issuer = "https://accounts.google.com"
+oauth_audiences = [
+  # Add your OAuth audience IDs here
+  # "123456789-abcdefg.apps.googleusercontent.com"
+]
+
+# API rate limit (requests per minute per client)
+api_rate_limit_rpm = 1000
+
+# ============================================================================
+# VERTEX AI
+# ============================================================================
+
+# Enable Vertex AI Feature Store
+# Set to false to skip (saves costs, enable when needed for ML)
+enable_vertex_ai = false
+
+# Number of nodes for Feature Store online serving
+vertex_ai_node_count = 1
+
+# ============================================================================
+# SECURITY
+# ============================================================================
+
+# Enable Customer-Managed Encryption Keys (CMEK)
+# Set to true for production environments with compliance requirements
+enable_cmek = false
+
+# ============================================================================
+# MONITORING & ALERTING
+# ============================================================================
+
+# Notification channels for alerts (get IDs from Cloud Console)
+# Example: ["projects/my-project/notificationChannels/1234567890"]
+notification_channels = [
+  # Add your notification channel IDs here
+  # You can create these in Cloud Console → Monitoring → Alerting → Notification Channels
+]
+
+# Daily cost threshold for cost alerts (USD)
+daily_cost_threshold = 100
+
+# Data freshness SLA in minutes (alert if data is older than this)
+data_freshness_sla_minutes = 120
+
+# ============================================================================
+# EXAMPLE CONFIGURATIONS BY ENVIRONMENT
+# ============================================================================
+
+# Development Environment (cost-optimized):
+# - enable_composer = true (for testing)
+# - enable_api_gateway = true (for testing)
+# - enable_vertex_ai = false (enable when needed)
+# - enable_cmek = false (not needed in dev)
+# - enable_preemptible_workers = true (save costs)
+# - enable_cross_region_replication = false (not needed in dev)
+# - dataflow_max_workers = 10 (small scale)
+# Expected cost: ~$500-800/month
+
+# Staging Environment (production-like):
+# - enable_composer = true
+# - enable_api_gateway = true
+# - enable_vertex_ai = true (if using ML features)
+# - enable_cmek = false (optional)
+# - enable_preemptible_workers = true (acceptable for staging)
+# - enable_cross_region_replication = false (optional)
+# - dataflow_max_workers = 25
+# Expected cost: ~$2,000-3,000/month
+
+# Production Environment (full features):
+# - enable_composer = true
+# - enable_api_gateway = true
+# - enable_vertex_ai = true (if using ML features)
+# - enable_cmek = true (for compliance)
+# - enable_preemptible_workers = false (reliability)
+# - enable_cross_region_replication = true (disaster recovery)
+# - dataflow_max_workers = 100
+# Expected cost: ~$10,000-15,000/month (scales with usage)
