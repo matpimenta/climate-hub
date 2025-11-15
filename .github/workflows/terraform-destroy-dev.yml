@@ -1,0 +1,121 @@
+name: Destroy Dev Environment
+
+on:
+  workflow_dispatch:
+    inputs:
+      confirmation:
+        description: 'Type "destroy-dev" to confirm destruction'
+        required: true
+        type: string
+      reason:
+        description: 'Reason for destroying the environment'
+        required: true
+        type: string
+
+env:
+  PROJECT_ID: climate-hub-478222
+  REGION: us-central1
+  TERRAFORM_VERSION: 1.5.0
+  WORKING_DIR: infrastructure/terraform/environments/dev
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  validate-confirmation:
+    name: Validate Destruction Confirmation
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Validate Confirmation Input
+        run: |
+          if [ "${{ github.event.inputs.confirmation }}" != "destroy-dev" ]; then
+            echo "❌ Confirmation failed. You must type 'destroy-dev' exactly to proceed."
+            exit 1
+          fi
+          echo "✅ Confirmation validated"
+          echo "🔥 Reason for destruction: ${{ github.event.inputs.reason }}"
+
+  terraform-destroy:
+    name: Terraform Destroy
+    runs-on: ubuntu-latest
+    needs: validate-confirmation
+    environment: dev-destroy
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ secrets.GCP_SERVICE_ACCOUNT }}
+          project_id: ${{ env.PROJECT_ID }}
+
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@v2
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: ${{ env.TERRAFORM_VERSION }}
+
+      - name: Terraform Init
+        working-directory: ${{ env.WORKING_DIR }}
+        run: |
+          terraform init \
+            -backend-config="bucket=${PROJECT_ID}-terraform-state" \
+            -backend-config="prefix=environments/dev"
+
+      - name: Terraform Plan Destroy
+        id: plan-destroy
+        working-directory: ${{ env.WORKING_DIR }}
+        run: |
+          terraform plan -destroy \
+            -var="project_id=${PROJECT_ID}" \
+            -var="region=${REGION}" \
+            -out=destroy-plan \
+            -no-color
+        continue-on-error: false
+
+      - name: Display Destroy Plan
+        working-directory: ${{ env.WORKING_DIR }}
+        run: |
+          echo "📋 Resources to be destroyed:"
+          terraform show destroy-plan
+
+      - name: Terraform Destroy
+        working-directory: ${{ env.WORKING_DIR }}
+        run: |
+          echo "🔥 Starting infrastructure destruction..."
+          echo "Reason: ${{ github.event.inputs.reason }}"
+          echo "Triggered by: ${{ github.actor }}"
+          terraform apply -auto-approve destroy-plan
+
+      - name: Verify Destruction
+        working-directory: ${{ env.WORKING_DIR }}
+        run: |
+          echo "✅ Infrastructure destruction completed"
+          terraform show
+
+      - name: Create Destruction Summary
+        if: always()
+        run: |
+          cat >> $GITHUB_STEP_SUMMARY <<EOF
+          # 🔥 Dev Environment Destruction Summary
+
+          **Status**: ${{ job.status }}
+          **Triggered by**: @${{ github.actor }}
+          **Reason**: ${{ github.event.inputs.reason }}
+          **Timestamp**: $(date -u '+%Y-%m-%d %H:%M:%S UTC')
+
+          ## Details
+          - **Project**: ${PROJECT_ID}
+          - **Region**: ${REGION}
+          - **Environment**: dev
+
+          ## Next Steps
+          To recreate the environment, push changes to main or manually trigger the deploy workflow.
+          EOF
