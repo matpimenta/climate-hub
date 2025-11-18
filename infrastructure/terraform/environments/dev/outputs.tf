@@ -254,3 +254,40 @@ output "cicd_variables" {
   }
   sensitive = false
 }
+
+# ============================================================================
+# CLIMATE DATA PLATFORM
+# ============================================================================
+
+output "climate_data" {
+  description = "Climate data platform details"
+  value = {
+    dataset_id        = module.climate_data.dataset_id
+    dataset_full_id   = module.climate_data.dataset_full_id
+    tables            = module.climate_data.table_ids
+    function_name     = module.climate_data.function_name
+    function_url      = module.climate_data.function_url
+    scheduler_job     = module.climate_data.scheduler_job_name
+    ingestion_schedule = module.climate_data.scheduler_schedule
+  }
+}
+
+output "climate_data_quick_commands" {
+  description = "Quick commands for climate data platform"
+  value = <<-EOT
+    # Query climate data
+    bq query --use_legacy_sql=false 'SELECT * FROM `${module.climate_data.dataset_full_id}.raw_gw_temperature` ORDER BY measurement_date DESC LIMIT 10'
+
+    # Manually trigger climate data ingestion
+    curl -X POST ${module.climate_data.function_url}
+
+    # View Cloud Function logs
+    gcloud functions logs read ${module.climate_data.function_name} --region=${var.region} --limit=50
+
+    # Check BigQuery tables
+    bq ls ${module.climate_data.dataset_id}
+
+    # View scheduler job details
+    gcloud scheduler jobs describe ${module.climate_data.scheduler_job_name} --location=${var.region}
+  EOT
+}

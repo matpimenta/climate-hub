@@ -173,3 +173,20 @@ data_freshness_sla_minutes = 120
 # - enable_cross_region_replication = true (disaster recovery)
 # - dataflow_max_workers = 100
 # Expected cost: ~$10,000-15,000/month (scales with usage)
+
+# ============================================================================
+# CLIMATE DATA PLATFORM
+# ============================================================================
+
+# BigQuery dataset ID for climate data
+climate_dataset_id = "climate_data"
+
+# Cron schedule for Global Warming API ingestion (Monthly on the 5th at 2 AM UTC)
+# Format: minute hour day month weekday
+climate_global_warming_schedule = "0 2 5 * *"
+
+# Cron schedule for NASA GISTEMP ingestion (Monthly on the 15th at 3 AM UTC)
+climate_nasa_gistemp_schedule = "0 3 15 * *"
+
+# Time zone for the ingestion schedule
+climate_ingestion_time_zone = "UTC"

@@ -761,3 +761,38 @@ module "monitoring" {
     module.pubsub
   ]
 }
+
+# ============================================================================
+# PHASE 5: CLIMATE DATA PLATFORM
+# ============================================================================
+
+# Climate Data: Infrastructure for ingesting public climate datasets
+module "climate_data" {
+  source = "../../modules/climate-data"
+
+  project_id  = var.project_id
+  region      = var.region
+  environment = local.environment
+  name_prefix = local.name_prefix
+  labels      = local.common_labels
+
+  # BigQuery configuration
+  bigquery_location          = var.bigquery_location
+  dataset_id                 = var.climate_dataset_id
+  delete_contents_on_destroy = local.environment != "prod"
+
+  # Cloud Functions configuration
+  service_account_email = module.security.service_accounts["cloud_functions"].email
+  source_bucket         = module.storage.buckets["dataflow_staging"].name
+
+  # Scheduler configuration
+  global_warming_schedule  = var.climate_global_warming_schedule
+  nasa_gistemp_schedule    = var.climate_nasa_gistemp_schedule
+  ingestion_time_zone      = var.climate_ingestion_time_zone
+
+  depends_on = [
+    module.project_services,
+    module.security,
+    module.storage
+  ]
+}

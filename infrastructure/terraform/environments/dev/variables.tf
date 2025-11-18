@@ -218,3 +218,31 @@ variable "data_freshness_sla_minutes" {
   type        = number
   default     = 120 # 2 hours
 }
+
+# ============================================================================
+# CLIMATE DATA
+# ============================================================================
+
+variable "climate_dataset_id" {
+  description = "BigQuery dataset ID for climate data"
+  type        = string
+  default     = "climate_data"
+}
+
+variable "climate_global_warming_schedule" {
+  description = "Cron schedule for Global Warming API ingestion"
+  type        = string
+  default     = "0 2 5 * *" # Monthly on the 5th at 2 AM UTC
+}
+
+variable "climate_nasa_gistemp_schedule" {
+  description = "Cron schedule for NASA GISTEMP ingestion"
+  type        = string
+  default     = "0 3 15 * *" # Monthly on the 15th at 3 AM UTC
+}
+
+variable "climate_ingestion_time_zone" {
+  description = "Time zone for climate data ingestion schedule"
+  type        = string
+  default     = "UTC"
+}
